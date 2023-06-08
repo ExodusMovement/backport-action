@@ -23,6 +23,7 @@ export interface GithubApi {
     pr: number,
     reviewers: string[]
   ): Promise<RequestReviewersResponse>;
+  assignPR(pr: number, reviewers: string[]): Promise<AssignPullRequestResponse>;
 }
 
 export class Github implements GithubApi {
@@ -164,6 +165,9 @@ export type PullRequest = {
   requested_reviewers: {
     login: string;
   }[];
+  assignees: {
+    login: string;
+  }[];
   commits: number;
 };
 export type CreatePullRequestResponse = {
@@ -175,6 +179,10 @@ export type CreatePullRequestResponse = {
 };
 export type RequestReviewersResponse = CreatePullRequestResponse;
 export type LabelPullRequestResponse = {
+  status: number;
+};
+
+export type AssignPullRequestResponse = {
   status: number;
 };
 
