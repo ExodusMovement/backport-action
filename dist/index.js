@@ -200,6 +200,10 @@ class Backport {
                                 // The PR was still created so let's still comment on the original.
                             }
                         }
+                        yield this.github.assignPR(new_pr.number, [mainpr.user.login]);
+                        yield this.github.requestReviewers(new_pr.number, [
+                            mainpr.user.login,
+                        ]);
                         const message = this.composeMessageForSuccess(new_pr.number, target);
                         successByTarget.set(target, true);
                         yield this.github.createComment({
@@ -572,16 +576,22 @@ class Github {
             return __classPrivateFieldGet(this, _Github_octokit, "f").rest.pulls.create(pr);
         });
     }
-    requestReviewers(request) {
+    requestReviewers(pr, reviewers) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(`Request reviewers: ${request.reviewers}`);
-            return __classPrivateFieldGet(this, _Github_octokit, "f").rest.pulls.requestReviewers(request);
+            console.log(`Requesting reviewers: ${reviewers}`);
+            return __classPrivateFieldGet(this, _Github_octokit, "f").rest.pulls.requestReviewers(Object.assign(Object.assign({}, this.getRepo()), { pull_number: pr, reviewers }));
         });
     }
     labelPR(pr, labels) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(`Label PR #${pr} with labels: ${labels}`);
             return __classPrivateFieldGet(this, _Github_octokit, "f").rest.issues.addLabels(Object.assign(Object.assign({}, this.getRepo()), { issue_number: pr, labels }));
+        });
+    }
+    assignPR(pr, assignees) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log(`Assigning: ${assignees}`);
+            return __classPrivateFieldGet(this, _Github_octokit, "f").rest.issues.addAssignees(Object.assign(Object.assign({}, this.getRepo()), { issue_number: pr, assignees }));
         });
     }
 }
