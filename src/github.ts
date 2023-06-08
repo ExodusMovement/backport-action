@@ -19,7 +19,10 @@ export interface GithubApi {
   getCommits(pull: PullRequest): Promise<string[]>;
   createPR(pr: CreatePullRequest): Promise<CreatePullRequestResponse>;
   labelPR(pr: number, labels: string[]): Promise<LabelPullRequestResponse>;
-  requestReviewers(request: ReviewRequest): Promise<RequestReviewersResponse>;
+  requestReviewers(
+    pr: number,
+    reviewers: string[]
+  ): Promise<RequestReviewersResponse>;
 }
 
 export class Github implements GithubApi {
@@ -113,9 +116,13 @@ export class Github implements GithubApi {
     return this.#octokit.rest.pulls.create(pr);
   }
 
-  public async requestReviewers(request: ReviewRequest) {
-    console.log(`Request reviewers: ${request.reviewers}`);
-    return this.#octokit.rest.pulls.requestReviewers(request);
+  public async requestReviewers(pr: number, reviewers: string[]) {
+    console.log(`Requesting reviewers: ${reviewers}`);
+    return this.#octokit.rest.pulls.requestReviewers({
+      ...this.getRepo(),
+      pull_number: pr,
+      reviewers,
+    });
   }
 
   public async labelPR(pr: number, labels: string[]) {
