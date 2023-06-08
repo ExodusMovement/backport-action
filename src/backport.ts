@@ -224,6 +224,11 @@ export class Backport {
             }
           }
 
+          await this.github.assignPR(new_pr.number, [mainpr.user.login]);
+          await this.github.requestReviewers(new_pr.number, [
+            mainpr.user.login,
+          ]);
+
           const message = this.composeMessageForSuccess(new_pr.number, target);
           successByTarget.set(target, true);
           await this.github.createComment({
