@@ -126,6 +126,15 @@ export class Github implements GithubApi {
       labels,
     });
   }
+
+  public async assignPR(pr: number, assignees: string[]) {
+    console.log(`Assigning: ${assignees}`);
+    return this.#octokit.rest.issues.addAssignees({
+      ...this.getRepo(),
+      issue_number: pr,
+      assignees,
+    });
+  }
 }
 
 export type PullRequest = {
