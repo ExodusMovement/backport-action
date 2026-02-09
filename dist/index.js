@@ -291,6 +291,13 @@ class Backport {
                         continue;
                     }
                     const new_pr = new_pr_response.data;
+                    try {
+                        await this.github.enableAutoMerge(new_pr.node_id);
+                        console.info(`Auto-merge enabled for PR #${new_pr.number}`);
+                    }
+                    catch (error) {
+                        console.warn(`Failed to enable auto-merge for PR #${new_pr.number}: ${error}`);
+                    }
                     if (this.config.copy_milestone == true) {
                         const milestone = mainpr.milestone?.number;
                         if (milestone) {
@@ -344,6 +351,11 @@ class Backport {
                             // The PR was still created so let's still comment on the original.
                         }
                     }
+                    await this.github.assignPR(new_pr.number, [mainpr.user.login]);
+                    await this.github.requestReviewers({
+                        pull_number: new_pr.number,
+                        reviewers: [mainpr.user.login]
+                    });
                     if (this.config.add_author_as_assignee == true) {
                         const author = mainpr.user.login;
                         console.info("Setting " + author + " as assignee");
@@ -815,8 +827,15 @@ class Github {
         return this.#octokit.rest.pulls.create(pr);
     }
     async requestReviewers(request) {
+        const currentRepo = this.getRepo();
+        const { pull_number, reviewers, owner = currentRepo.owner, repo = currentRepo.repo, } = request;
         console.log(`Request reviewers: ${request.reviewers}`);
-        return this.#octokit.rest.pulls.requestReviewers(request);
+        return this.#octokit.rest.pulls.requestReviewers({
+            pull_number,
+            reviewers,
+            repo,
+            owner,
+        });
     }
     async labelPR(pr, labels, repo) {
         console.log(`Label PR #${pr} with labels: ${labels}`);
@@ -841,6 +860,26 @@ class Github {
             issue_number: pr,
             milestone: milestone,
         });
+    }
+    async assignPR(pr, assignees) {
+        console.log(`Assigning: ${assignees}`);
+        return this.#octokit.rest.issues.addAssignees({
+            ...this.getRepo(),
+            issue_number: pr,
+            assignees,
+        });
+    }
+    async enableAutoMerge(nodeId) {
+        console.log(`Enabling auto-merge for PR with node_id: ${nodeId}`);
+        await this.#octokit.graphql(`mutation EnableAutoMerge($pullRequestId: ID!) {
+        enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId, mergeMethod: SQUASH}) {
+          pullRequest {
+            autoMergeRequest {
+              enabledAt
+            }
+          }
+        }
+      }`, { pullRequestId: nodeId });
     }
     /**
      * Retrieves the SHA of the merge commit for a given pull request.

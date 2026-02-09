@@ -36,6 +36,7 @@ export interface GithubApi {
   ): Promise<string | null>;
   getMergeCommitSha(pull: PullRequest): Promise<string | null>;
   assignPR(pr: number, reviewers: string[]): Promise<AssignPullRequestResponse>;
+  enableAutoMerge(nodeId: string): Promise<void>;
 }
 
 export class Github implements GithubApi {
@@ -181,6 +182,22 @@ export class Github implements GithubApi {
       issue_number: pr,
       assignees,
     });
+  }
+
+  public async enableAutoMerge(nodeId: string): Promise<void> {
+    console.log(`Enabling auto-merge for PR with node_id: ${nodeId}`);
+    await this.#octokit.graphql(
+      `mutation EnableAutoMerge($pullRequestId: ID!) {
+        enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId, mergeMethod: SQUASH}) {
+          pullRequest {
+            autoMergeRequest {
+              enabledAt
+            }
+          }
+        }
+      }`,
+      { pullRequestId: nodeId },
+    );
   }
 
   /**
@@ -405,6 +422,7 @@ export type CreatePullRequestResponse = {
   status: number;
   data: {
     number: number;
+    node_id: string;
     requested_reviewers?: ({ login: string } | null)[] | null;
   };
 };
