@@ -386,6 +386,13 @@ export class Backport {
           }
           const new_pr = new_pr_response.data;
 
+          try {
+            await this.github.enableAutoMerge(new_pr.node_id);
+            console.info(`Auto-merge enabled for PR #${new_pr.number}`);
+          } catch (error) {
+            console.warn(`Failed to enable auto-merge for PR #${new_pr.number}: ${error}`);
+          }
+
           if (this.config.copy_milestone == true) {
             const milestone = mainpr.milestone?.number;
             if (milestone) {
